@@ -20,3 +20,8 @@ def display_information(jeu):
 
         # Écrire la direction du serpent
         writer.writerow(["Direction", jeu.player.direction])
+
+###########################################################
+# Q-learning 
+###########################################################
+

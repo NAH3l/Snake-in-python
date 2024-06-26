@@ -23,14 +23,13 @@ class Jeu:
             self.player.segments[0]["x"] >= self.rect_x + self.rect_width or
             self.player.segments[0]["y"] < self.rect_y or
             self.player.segments[0]["y"] >= self.rect_y + self.rect_height):
-            print("Game Over")
-            pygame.quit()  # Quitter le jeu lorsque le joueur sort
+            self.reset_game()
 
         # Check collision with self
         for segment in self.player.segments[1:]:
             if self.player.segments[0]["x"] == segment["x"] and self.player.segments[0]["y"] == segment["y"]:
-                print("Game Over")
-                pygame.quit()  # Quitter le jeu lorsque le joueur touche son propre corps
+                self.reset_game()
+                
 
         # Check collision with apple
         if self.player.segments[0]["x"] == self.apple.apple_position_x and self.player.segments[0]["y"] == self.apple.apple_position_y:
@@ -76,3 +75,13 @@ class Jeu:
             clock.tick(self.player.speed)  # Control the speed of the game
 
         pygame.quit()
+
+    def reset_game(self):
+        # Réinitialisation du jeu (remet les objets à leur état initial)
+        self.player = SnakePlayer(self.screen, self.rect_x, self.rect_y, self.rect_width, self.rect_height)
+        self.apple = Apple(self.screen, self.rect_x, self.rect_y, self.rect_width, self.rect_height)
+        self.player.score = 0
+        self.player.speed = 10
+
+        # Relance de la partie
+        self.run_game()         

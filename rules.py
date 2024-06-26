@@ -72,7 +72,7 @@ class Jeu:
                 self.player.move_player()
                 self.check_collision()
                 self.draw()
-                affichage.initialistion(self)
+                affichage.display_information(self)
             clock.tick(self.player.speed)  # Control the speed of the game
 
         pygame.quit()

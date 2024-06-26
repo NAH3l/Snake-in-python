@@ -3,7 +3,7 @@ import random
 from entities import SnakePlayer, Apple
 import csv
 
-def initialistion(jeu):
+def display_information(jeu):
     # Ouvrir le fichier CSV en mode écriture
     with open("game_info.csv", "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
@@ -20,6 +20,3 @@ def initialistion(jeu):
 
         # Écrire la direction du serpent
         writer.writerow(["Direction", jeu.player.direction])
-
-def forward_propagation(file):
-    

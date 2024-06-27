@@ -1,7 +1,7 @@
 ﻿# Snake-in-python using Pygame
 
 # Environnement : 
-    - Python 3.12.4 
+    - Python 3.11.0
 
 # Library 
     - pygame : pip install pygame

@@ -21,3 +21,4 @@ if __name__ == "__main__":
     jeu.run_game()
 
     affichage.display_information(jeu)
+    

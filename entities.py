@@ -110,3 +110,18 @@ class SnakePlayer:
             "y": last_segment["y"]
         }
         self.segments.append(new_segment)
+
+    def is_body_ahead(self, direction):
+        head_x = self.segments[0]["x"]
+        head_y = self.segments[0]["y"]
+        
+        if direction == "UP":
+            next_position = {"x": head_x, "y": head_y - 1}
+        elif direction == "DOWN":
+            next_position = {"x": head_x, "y": head_y + 1}
+        elif direction == "LEFT":
+            next_position = {"x": head_x - 1, "y": head_y}
+        elif direction == "RIGHT":
+            next_position = {"x": head_x + 1, "y": head_y}
+        
+        return next_position in self.segments[1:]

@@ -19,6 +19,7 @@ class Jeu:
         self.bot = Bot(self.actions)
         self.font = pygame.font.Font(None, 24)  # Initialize font with smaller size
 
+        self.iteration_count = 0
     #  Game Rules
     def check_collision(self):
         # Check collision with walls
@@ -33,7 +34,6 @@ class Jeu:
             if self.player.segments[0]["x"] == segment["x"] and self.player.segments[0]["y"] == segment["y"]:
                 self.reset_game()
                 
-
         # Check collision with apple
         if self.player.segments[0]["x"] == self.apple.apple_position_x and self.player.segments[0]["y"] == self.apple.apple_position_y:
             self.apple.update_position()  # Mettre à jour la position de l'apple
@@ -53,16 +53,28 @@ class Jeu:
         score_text = self.font.render(f"Score: {self.player.score}", True, (255, 255, 255))
         speed_text = self.font.render(f"Speed: {self.player.speed}", True, (255, 255, 255))
         length_text = self.font.render(f"Length: {len(self.player.segments)}", True, (255, 255, 255))
+        iteration = self.font.render(f"Iteration: {self.iteration_count}", True, (255, 255, 255))
+        epsilon = self.font.render(f"Epsilon: {self.bot.epsilon}", True, (255, 255, 255))
+        learning_rate = self.font.render(f"lr: {self.bot.learning_rate}", True, (255, 255, 255))
+        q_table = self.font.render(f"Q-Table: {self.bot.q_table}", True, (255, 255, 255))
+        avg_q_value = self.font.render(f"Avg Q-Value: {np.mean(list(self.bot.q_table.values()))}", True, (255, 255, 255))
+        #action = self.font.render(f"Action: {action}", True, (255, 255, 255))
+
 
         self.screen.blit(score_text, (self.rect_x , self.rect_y - 40))
         self.screen.blit(speed_text, (self.rect_x + 150 , self.rect_y - 40))
         self.screen.blit(length_text, (self.rect_x + 300, self.rect_y - 40))
-
+        self.screen.blit(iteration, (self.rect_x + 450, self.rect_y - 40))
+        self.screen.blit(epsilon, (self.rect_x, self.rect_y + 320))
+        self.screen.blit(learning_rate, (self.rect_x + 150, self.rect_y + 320)) 
+        #self.screen.blit(q_table, (self.rect_x + 300, self.rect_y + 320))
+        self.screen.blit(avg_q_value, (self.rect_x + 300, self.rect_y + 320))
+        
         pygame.display.flip()
 
     def run_game(self):
-        running = True
         clock = pygame.time.Clock()
+        running = True
 
         while running:
             for event in pygame.event.get():
@@ -72,7 +84,8 @@ class Jeu:
             if running:
                 state = self.bot.get_state(self.player, self.apple)
                 action = self.bot.choose_action(state)
-                
+                print(f"State: {state}, Action: {action}")
+
                 # Convertir l'action en direction pour le serpent
                 if action == "LEFT" and self.player.direction != "RIGHT":
                     self.player.direction = "LEFT"
@@ -84,16 +97,17 @@ class Jeu:
                     self.player.direction = "DOWN"
 
                 self.player.move_player()
-                
+            
                 # Calcul de la récompense
                 reward = 0
                 if self.check_collision():
                     reward = -100  # Grosse pénalité pour avoir perdu
                 elif self.player.segments[0]["x"] == self.apple.apple_position_x and self.player.segments[0]["y"] == self.apple.apple_position_y:
-                    reward = 100  # Grosse récompense pour avoir mangé la pomme
+                    reward = 1000  # Grosse récompense pour avoir mangé la pomme
 
                 next_state = self.bot.get_state(self.player, self.apple)
                 self.bot.update_q(state, action, reward, next_state)
+                print(f"Reward: {reward}, Next State: {next_state}")
 
                 self.check_collision()
                 self.draw()
@@ -108,6 +122,6 @@ class Jeu:
         self.apple = Apple(self.screen, self.rect_x, self.rect_y, self.rect_width, self.rect_height)
         self.player.score = 0
         self.player.speed = 10
-
+        self.iteration_count += 1
         # Relance de la partie
         self.run_game()         

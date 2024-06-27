@@ -2,6 +2,8 @@ import pygame
 import random
 from entities import SnakePlayer, Apple
 import affichage         
+import numpy as np
+from bot_qlearning import Bot
 
 class Jeu:
     def __init__(self, screen, rect_x, rect_y, rect_width, rect_height):
@@ -13,7 +15,8 @@ class Jeu:
 
         self.player = SnakePlayer(screen, rect_x, rect_y, rect_width, rect_height)
         self.apple = Apple(screen, rect_x, rect_y, rect_width, rect_height)
-
+        self.actions = ["LEFT", "RIGHT", "UP", "DOWN"]
+        self.bot = Bot(self.actions)
         self.font = pygame.font.Font(None, 24)  # Initialize font with smaller size
 
     #  Game Rules
@@ -67,8 +70,31 @@ class Jeu:
                     running = False
 
             if running:
-                self.player.handle_keys()
+                state = self.bot.get_state(self.player, self.apple)
+                action = self.bot.choose_action(state)
+                
+                # Convertir l'action en direction pour le serpent
+                if action == "LEFT" and self.player.direction != "RIGHT":
+                    self.player.direction = "LEFT"
+                elif action == "RIGHT" and self.player.direction != "LEFT":
+                    self.player.direction = "RIGHT"
+                elif action == "UP" and self.player.direction != "DOWN":
+                    self.player.direction = "UP"
+                elif action == "DOWN" and self.player.direction != "UP":
+                    self.player.direction = "DOWN"
+
                 self.player.move_player()
+                
+                # Calcul de la récompense
+                reward = 0
+                if self.check_collision():
+                    reward = -100  # Grosse pénalité pour avoir perdu
+                elif self.player.segments[0]["x"] == self.apple.apple_position_x and self.player.segments[0]["y"] == self.apple.apple_position_y:
+                    reward = 100  # Grosse récompense pour avoir mangé la pomme
+
+                next_state = self.bot.get_state(self.player, self.apple)
+                self.bot.update_q(state, action, reward, next_state)
+
                 self.check_collision()
                 self.draw()
                 affichage.display_information(self)

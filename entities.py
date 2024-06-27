@@ -65,6 +65,7 @@ class SnakePlayer:
             pygame.draw.rect(self.screen, self.border_color, pygame.Rect(segment["x"], segment["y"], self.rect_size, self.rect_size))
     
     # Handle the keys
+    
     def handle_keys(self):
         keys = pygame.key.get_pressed()
         new_direction = self.direction

@@ -2,6 +2,8 @@ import pygame
 import random
 from entities import SnakePlayer, Apple
 import csv
+import numpy as np
+from tqdm import tqdm
 
 def display_information(jeu):
     # Ouvrir le fichier CSV en mode écriture
@@ -21,7 +23,6 @@ def display_information(jeu):
         # Écrire la direction du serpent
         writer.writerow(["Direction", jeu.player.direction])
 
-###########################################################
-# Q-learning 
-###########################################################
+    
+
 

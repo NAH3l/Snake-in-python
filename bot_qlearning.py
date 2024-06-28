@@ -12,7 +12,8 @@ class Bot:
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.grid_size = grid_size  # Taille d'une case du jeu
-
+        self.reward = -1
+        
     def getQ(self, state, action):
         """Get Q value for a state-action pair."""
         return self.q_table.get((state, action), 0.0)
@@ -21,26 +22,36 @@ class Bot:
         snake_head_x, snake_head_y = snake.segments[0]["x"], snake.segments[0]["y"]
         apple_x, apple_y = apple.apple_position_x, apple.apple_position_y
 
-        # Check if there is an obstacle
-        state = [
-            (snake_head_x > self.grid_size and ({"x": snake_head_x - self.grid_size, "y": snake_head_y} in snake.segments)),
-            (snake_head_x < 600 - 2 * self.grid_size and ({"x": snake_head_x + self.grid_size, "y": snake_head_y} in snake.segments)),
-            (snake_head_y > self.grid_size and ({"x": snake_head_x, "y": snake_head_y - self.grid_size} in snake.segments)),
-            (snake_head_y < 400 - 2 * self.grid_size and ({"x": snake_head_x, "y": snake_head_y + self.grid_size} in snake.segments)),
-            (snake_head_x > self.grid_size and snake_head_y > self.grid_size and ({"x": snake_head_x - self.grid_size, "y": snake_head_y - self.grid_size} in snake.segments)),
-            (snake_head_x < 600 - 2 * self.grid_size and snake_head_y > self.grid_size and ({"x": snake_head_x + self.grid_size, "y": snake_head_y - self.grid_size} in snake.segments)),
-            (snake_head_x > self.grid_size and snake_head_y < 400 - 2 * self.grid_size and ({"x": snake_head_x - self.grid_size, "y": snake_head_y + self.grid_size} in snake.segments)),
-            (snake_head_x < 600 - 2 * self.grid_size and snake_head_y < 400 - 2 * self.grid_size and ({"x": snake_head_x + self.grid_size, "y": snake_head_y + self.grid_size} in snake.segments)),
-            (apple_x < snake_head_x),
-            (apple_x > snake_head_x),
-            (apple_y < snake_head_y),
-            (apple_y > snake_head_y), 
-            (snake.is_body_ahead("UP")),
-            (snake.is_body_ahead("DOWN")),
-            (snake.is_body_ahead("LEFT")),
-            (snake.is_body_ahead("RIGHT")),
-        ]
+        state = []
+
+        # Vérifier les obstacles dans un rayon de 2 cases
+        for x_offset in range(-2, 3):
+            for y_offset in range(-2, 3):
+                # Ignorer la case où se trouve la tête
+                if x_offset == 0 and y_offset == 0:
+                    continue
+
+                check_x = snake_head_x + x_offset * self.grid_size
+                check_y = snake_head_y + y_offset * self.grid_size
+
+                # Vérifier les collisions avec les murs et le corps
+                state.append(self.is_obstacle(check_x, check_y, snake))
+
+        # Informations sur la pomme 
+        state.append(apple_x < snake_head_x)
+        state.append(apple_x > snake_head_x)
+        state.append(apple_y < snake_head_y)
+        state.append(apple_y > snake_head_y)
+
         return tuple(state)
+
+    def is_obstacle(self, x, y, snake):
+        # Vérifie si les coordonnées sont hors limites ou sur le corps du serpent
+        if (x < self.grid_size or x >= 600 - self.grid_size or 
+            y < self.grid_size or y >= 400 - self.grid_size or
+            {"x": x, "y": y} in snake.segments):
+            return True
+        return False
 
     def update_q(self, state, action, reward, next_state):
         """Update Q value for a state-action pair."""

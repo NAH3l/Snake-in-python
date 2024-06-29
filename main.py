@@ -20,5 +20,4 @@ if __name__ == "__main__":
     jeu = Jeu(screen, rect_x, rect_y, rect_width, rect_height)  # Créer l'instance de Jeu ici
     jeu.run_game()
 
-    affichage.display_information(jeu)
     

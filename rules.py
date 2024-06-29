@@ -1,9 +1,11 @@
 import pygame
 import random
 from entities import SnakePlayer, Apple
-import affichage         
+import affichage
 import numpy as np
 from bot_qlearning import Bot
+import csv
+import os
 
 class Jeu:
     def __init__(self, screen, rect_x, rect_y, rect_width, rect_height):
@@ -12,13 +14,12 @@ class Jeu:
         self.rect_y = rect_y
         self.rect_width = rect_width
         self.rect_height = rect_height
-
+        self.previous_score = 0
         self.player = SnakePlayer(screen, rect_x, rect_y, rect_width, rect_height)
         self.apple = Apple(screen, rect_x, rect_y, rect_width, rect_height)
         self.actions = ["LEFT", "RIGHT", "UP", "DOWN"]
         self.bot = Bot(self.actions)
         self.font = pygame.font.Font(None, 24)  # Initialize font with smaller size
-        self.iteration_count = 0
 
     #  Game Rules
     def check_collision(self):
@@ -53,7 +54,7 @@ class Jeu:
         score_text = self.font.render(f"Score: {self.player.score}", True, (255, 255, 255))
         speed_text = self.font.render(f"Speed: {self.player.speed}", True, (255, 255, 255))
         length_text = self.font.render(f"Length: {len(self.player.segments)}", True, (255, 255, 255))
-        iteration = self.font.render(f"Iteration: {self.iteration_count}", True, (255, 255, 255))
+        iteration = self.font.render(f"Iteration: {self.bot.iteration_count}", True, (255, 255, 255))
         epsilon = self.font.render(f"Epsilon: {self.bot.epsilon:.3f}", True, (255, 255, 255))
         learning_rate = self.font.render(f"lr: {self.bot.learning_rate}", True, (255, 255, 255))
         q_table = self.font.render(f"Q-Table: {self.bot.q_table}", True, (255, 255, 255))
@@ -84,8 +85,6 @@ class Jeu:
             if running:
                 state = self.bot.get_state(self.player, self.apple)
                 action = self.bot.choose_action(state)
-                #print(f"State: {state}, Action: {action}")
-                print(f"Reward: {self.bot.reward}, Action: {action}")
                 # Convertir l'action en direction pour le serpent
                 if action == "LEFT" and self.player.direction != "RIGHT":
                     self.player.direction = "LEFT"
@@ -97,31 +96,35 @@ class Jeu:
                     self.player.direction = "DOWN"
 
                 self.player.move_player()
-            
-                # Calcul de la récompense
-                self.bot.reward = -1  # Access and modify reward directly
-                if self.check_collision():
+                self.bot.reward = -1
+                # Reaward System
+                # 1. Reward for moving towards the apple:
+                if self.player.segments[0]["x"] == self.apple.apple_position_x and self.player.segments[0]["y"] == self.apple.apple_position_y:
+                    self.bot.reward = 10 + (len(self.player.segments) * 100)
+                # 2. Reward for moving away from the walls:
+                elif self.check_collision():  
                     self.bot.reward = -100
-                    print("Collision! Reward: ", self.bot.reward)  # Debug
-                elif self.player.segments[0]["x"] == self.apple.apple_position_x and self.player.segments[0]["y"] == self.apple.apple_position_y:
-                    self.bot.reward = 1000
-                    print("Apple eaten! Reward: ", self.bot.reward)  # Debug
+                # 3. Reward for Score Increase:
+                if self.player.score > self.previous_score:
+                    score_increase = self.player.score - self.previous_score
+                    self.bot.reward += 10 * score_increase  # Reward proportional to the increase
+                    self.previous_score = self.player.score  # Update previous score
+                # 4. Reward for moving towards the apple:
                 else:
+                    # manhattan distance
                     distance_to_apple = abs(self.player.segments[0]["x"] - self.apple.apple_position_x) + abs(self.player.segments[0]["y"] - self.apple.apple_position_y)
-                    if distance_to_apple == 1:
+                    if 1 <= distance_to_apple <= 5:
                         self.bot.reward += 10
-                    elif distance_to_apple == 2: 
-                        self.bot.reward += 5
-
+                    else:
+                        self.bot.reward -= 10
+                self.bot.total_reward += self.bot.reward
                 next_state = self.bot.get_state(self.player, self.apple)
                 self.bot.update_q(state, action, self.bot.reward, next_state)
-                #print(f"Next State: {next_state}")
                 #self.bot.epsilon = max(0.01, self.bot.epsilon * 0.999)  # Diminution exponentielle
                 self.check_collision()
                 self.draw()
-                affichage.display_information(self)
-                clock.tick(20)  # Control the speed of the game
-
+                clock.tick(100)  # Control the speed of the game
+            self.bot.save_data("game_data.csv")
         pygame.quit()
 
     def reset_game(self):
@@ -130,6 +133,12 @@ class Jeu:
         self.apple = Apple(self.screen, self.rect_x, self.rect_y, self.rect_width, self.rect_height)
         self.player.score = 0
         self.player.speed = 10
-        self.iteration_count += 1
+        self.bot.iteration_count += 1
         # Relance de la partie
         self.run_game()         
+
+
+
+
+  
+    

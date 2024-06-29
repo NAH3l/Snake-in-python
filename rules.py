@@ -76,6 +76,7 @@ class Jeu:
     def run_game(self):
         clock = pygame.time.Clock()
         running = True
+        steps_since_last_apple = 0
 
         while running:
             for event in pygame.event.get():
@@ -97,30 +98,30 @@ class Jeu:
 
                 self.player.move_player()
                 self.bot.reward = -1
+                steps_since_last_apple += 1
                 # Reaward System
-                # 1. Reward for moving towards the apple:
+                # 1. Reward for eating the apple:
                 if self.player.segments[0]["x"] == self.apple.apple_position_x and self.player.segments[0]["y"] == self.apple.apple_position_y:
-                    self.bot.reward = 10 + (len(self.player.segments) * 100)
+                    self.bot.reward = 10
+                    steps_since_last_apple = 0
                 # 2. Reward for moving away from the walls:
                 elif self.check_collision():  
-                    self.bot.reward = -100
-                # 3. Reward for Score Increase:
-                if self.player.score > self.previous_score:
-                    score_increase = self.player.score - self.previous_score
-                    self.bot.reward += 10 * score_increase  # Reward proportional to the increase
-                    self.previous_score = self.player.score  # Update previous score
-                # 4. Reward for moving towards the apple:
+                    self.bot.reward = -10
+                # 3. Reward for moving towards the apple:
                 else:
                     # manhattan distance
                     distance_to_apple = abs(self.player.segments[0]["x"] - self.apple.apple_position_x) + abs(self.player.segments[0]["y"] - self.apple.apple_position_y)
                     if 1 <= distance_to_apple <= 5:
-                        self.bot.reward += 10
+                        self.bot.reward += 1
                     else:
-                        self.bot.reward -= 10
+                        self.bot.reward -= 5
+                if steps_since_last_apple > 50:
+                    self.bot.reward -= 10
+
                 self.bot.total_reward += self.bot.reward
                 next_state = self.bot.get_state(self.player, self.apple)
                 self.bot.update_q(state, action, self.bot.reward, next_state)
-                #self.bot.epsilon = max(0.01, self.bot.epsilon * 0.999)  # Diminution exponentielle
+                self.bot.epsilon = max(0.01, self.bot.epsilon * 0.999)  # Diminution exponentielle
                 self.check_collision()
                 self.draw()
                 clock.tick(100)  # Control the speed of the game

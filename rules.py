@@ -86,6 +86,7 @@ class Jeu:
             if running:
                 state = self.bot.get_state(self.player, self.apple)
                 action = self.bot.choose_action(state)
+                
                 # Convertir l'action en direction pour le serpent
                 if action == "LEFT" and self.player.direction != "RIGHT":
                     self.player.direction = "LEFT"
@@ -106,22 +107,11 @@ class Jeu:
                     steps_since_last_apple = 0
                 # 2. Reward for moving away from the walls:
                 elif self.check_collision():  
-                    self.bot.reward = -10
-                # 3. Reward for moving towards the apple:
-                else:
-                    # manhattan distance
-                    distance_to_apple = abs(self.player.segments[0]["x"] - self.apple.apple_position_x) + abs(self.player.segments[0]["y"] - self.apple.apple_position_y)
-                    if 1 <= distance_to_apple <= 5:
-                        self.bot.reward += 1
-                    else:
-                        self.bot.reward -= 5
-                if steps_since_last_apple > 50:
-                    self.bot.reward -= 10
+                    self.bot.reward = -5
 
                 self.bot.total_reward += self.bot.reward
                 next_state = self.bot.get_state(self.player, self.apple)
                 self.bot.update_q(state, action, self.bot.reward, next_state)
-                self.bot.epsilon = max(0.01, self.bot.epsilon * 0.999)  # Diminution exponentielle
                 self.check_collision()
                 self.draw()
                 clock.tick(100)  # Control the speed of the game
@@ -135,6 +125,7 @@ class Jeu:
         self.player.score = 0
         self.player.speed = 10
         self.bot.iteration_count += 1
+        self.bot.epsilon = max(0.01, self.bot.epsilon * 0.999)  # Diminution exponentielle
         # Relance de la partie
         self.run_game()         
 
